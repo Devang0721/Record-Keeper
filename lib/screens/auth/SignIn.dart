@@ -6,6 +6,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:login_ui/config/database_helper.dart';
 import 'package:login_ui/config/palette.dart';
 import 'package:login_ui/main.dart';
+import 'package:login_ui/screens/auth/change_password.dart';
+import 'package:login_ui/screens/auth/forgotpass_email.dart';
 import 'home.dart';
 
 class SignIn extends StatefulWidget {
@@ -19,7 +21,7 @@ class _SignInState extends State<SignIn> {
   bool isLoading = false;
   @override
   void initState() {
-    // TODO: implement initState
+    
     super.initState();
     emailctrl = new TextEditingController();
     passctrl = new TextEditingController();
@@ -91,6 +93,20 @@ class _SignInState extends State<SignIn> {
                         )),
                   ),
                 ),
+                InkWell(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>EnterEmail()));
+                  },
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Text(
+                      'Forgot password',
+                      style: TextStyle(
+                        decoration: TextDecoration.underline
+                      ),
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Row(
@@ -131,14 +147,20 @@ class _SignInState extends State<SignIn> {
       "pass": passctrl.text,
     };
     var res = await http.post(url, body: data);
-    if (jsonDecode(res.body) == "dont have account") {
+    var body=jsonDecode(res.body);
+    print(body);
+    if (body['result'] == "dont have account") {
+      print("if");
       Fluttertoast.showToast(
           msg: "Dont have Account, Please register",
           toastLength: Toast.LENGTH_LONG);
+          print("Dont have Account, Please register");
     } else {
-      if (jsonDecode(res.body) == "false") {
+      print("else");
+      if (body['result'] =="false") {
         Fluttertoast.showToast(
             msg: "Incorrect Password", toastLength: Toast.LENGTH_SHORT);
+        print('Incorrect Password');
       } else {
         List<Map<String, dynamic>> query =
             await DatabaseHelper.instance.queryAll();
@@ -146,6 +168,9 @@ class _SignInState extends State<SignIn> {
         int Give = await DatabaseHelper.instance.TotalToGive();
         addEmailToSF(emailctrl.text);
         addPassToSF(passctrl.text);
+        addNameToSF(body['name']);
+        addCompanyNameToSF(body['company']);
+        addNumberToSF(body['phone']);
         Navigator.push(context,
             MaterialPageRoute(builder: (context) => Home(query, Give, Take)));
       }

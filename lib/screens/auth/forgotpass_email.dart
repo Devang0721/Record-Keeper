@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -8,26 +10,25 @@ import '../../main.dart';
 import '../background_paint.dart';
 import 'home.dart';
 import 'change_password.dart';
+import 'package:http/http.dart'as http;
+import 'dart:convert';
 
-class SharedAuth extends StatefulWidget {
-  String name;
-  bool changePass;
-  SharedAuth(this.name,this.changePass);
+class EnterEmail extends StatefulWidget {
+
   @override
-  _SharedAuthState createState() => _SharedAuthState();
+  _EnterEmailState createState() => _EnterEmailState();
 }
 
-class _SharedAuthState extends State<SharedAuth>
-    with SingleTickerProviderStateMixin {
+class _EnterEmailState extends State<EnterEmail> with SingleTickerProviderStateMixin {
+
   AnimationController _controller;
-  TextEditingController passctrl;
-  bool pass = true;
-  bool isLoading = false;
+   bool isLoading = false;
+   String email='',sec_ans='';
   @override
   void initState() {
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 4));
-    passctrl = new TextEditingController();
+   
     super.initState();
   }
 
@@ -36,7 +37,6 @@ class _SharedAuthState extends State<SharedAuth>
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,7 +58,7 @@ class _SharedAuthState extends State<SharedAuth>
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Welcome\nBack\n'+widget.name.toString(),
+                    'Forgot Password',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 30,
@@ -73,37 +73,28 @@ class _SharedAuthState extends State<SharedAuth>
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: TextField(
-                        controller: passctrl,
-                        obscureText: pass,
+                        onChanged: (value){
+                          email=value;
+                        },
                         decoration: InputDecoration(
-                            hintText: widget.changePass?'Current Password':'Password',
+                            hintText: 'Enter email',
                             hintStyle: TextStyle(color: Colors.black54, fontSize: 20),
                             prefixIcon: Icon(
-                              Icons.vpn_key,
+                              Icons.email,
                               color: Colors.black54,
                               size: 25,
                             ),
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  pass = !pass;
-                                });
-                              },
-                              icon: Icon(
-                                Icons.remove_red_eye,
-                                color: Colors.black,
-                                size: 25,
-                              ),
-                            )),
+                            ),
                       ),
                     ),
+                    
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            widget.changePass?'Change Password':'Log In',
+                           'Change Password',
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               color: Palette.darkBlue,
@@ -129,30 +120,44 @@ class _SharedAuthState extends State<SharedAuth>
     );
   }
 
-  void verify() async{
-    setState((){
-      isLoading = true;
-    });
-    String pass = await getPass();
-    if(passctrl.text == pass){
-      List<Map<String, dynamic>> query =
-      await DatabaseHelper.instance.queryAll();
-      int Take = await DatabaseHelper.instance.TotalToTake();
-      int Give = await DatabaseHelper.instance.TotalToGive();
-      widget.changePass?Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePass())):Navigator.push(context,
-          MaterialPageRoute(builder: (context) => Home(query, Give, Take)));
+  // void verify() async{
+  //   setState((){
+  //     isLoading = true;
+  //   });
+  //   String pass = await getPass();
+  //   if(passctrl.text == pass){
+  //     List<Map<String, dynamic>> query =
+  //     await DatabaseHelper.instance.queryAll();
+  //     int Take = await DatabaseHelper.instance.TotalToTake();
+  //     int Give = await DatabaseHelper.instance.TotalToGive();
+  //     widget.changePass?Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePass())):Navigator.push(context,
+  //         MaterialPageRoute(builder: (context) => Home(query, Give, Take)));
       
-    }else{
-      Fluttertoast.showToast(msg: 'Incorrect Password',toastLength:  Toast.LENGTH_LONG);
-    }
-    setState((){
-      isLoading = false;
-    });
-  }
+  //   }else{
+  //     Fluttertoast.showToast(msg: 'Incorrect Password',toastLength:  Toast.LENGTH_LONG);
+  //   }
+  //   setState((){
+  //     isLoading = false;
+  //   });
+  // }
 
   Widget _RoundContinueButton(isLoading) {
     return RawMaterialButton(
-      onPressed: ()  => (passctrl.text == '') ? Fluttertoast.showToast(msg: 'Please Enter Your password',toastLength:  Toast.LENGTH_LONG) : verify(),
+      onPressed: ()async{
+       
+        if(email=='')
+        {
+          Fluttertoast.showToast(msg: 'Please Enter Your Email',toastLength:  Toast.LENGTH_LONG);
+        }
+        else{
+          print("yes");
+          checkEmail();
+            
+        }
+          
+          
+      },
+      // onPressed: ()  => (passctrl.text == '') ? Fluttertoast.showToast(msg: 'Please Enter Your password',toastLength:  Toast.LENGTH_LONG) : verify(),
       elevation: 0.0,
       fillColor: Palette.darkBlue,
       splashColor: Palette.darkOrange,
@@ -164,6 +169,29 @@ class _SharedAuthState extends State<SharedAuth>
         size: 24.0,
       ),
     );
+  }
+  void checkEmail() async{
+      setState(() {
+      isLoading = true;
+    });
+    var url = "https://355668.xyz/Authentication/forgot_pass_email.php";
+    var data = {
+      "email": email,
+      // "sec_ans":sec_ans
+
+    };
+    var res = await http.post(url, body: data);
+    var body=jsonDecode(res.body);
+    print(body);
+    if(body['result'] == "dont have account")
+        Fluttertoast.showToast(msg: 'No account Please Register',toastLength:  Toast.LENGTH_LONG);
+    else{
+      Navigator.push(context, MaterialPageRoute(builder: (context)=>ChangePass(email: email,forgot: true,)));
+    }
+      
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Widget _LoadingIndicator(bool isLoading) {

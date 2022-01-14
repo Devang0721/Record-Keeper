@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:login_ui/config/database_helper.dart';
 import 'package:toggle_switch/toggle_switch.dart';
@@ -18,8 +19,11 @@ class _AddState extends State<Add> {
   int _controller2;
   TextEditingController _controller3 = new TextEditingController();
   TextEditingController _controller4 = new TextEditingController();
-  bool toggleValue = false;
+  bool toggleValue = true;
   int Take = 0, Give = 0;
+  List<bool> selected=[false,false,false,false];
+  int index=0;
+  int selectedIndex=3;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,6 +112,39 @@ class _AddState extends State<Add> {
                     fontSize: 23,
                   ),
                 ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                        children: [
+                          option('Food',0),
+                          option('Shopping',1),
+                          option('Medical',2),
+                          option('Others',3),
+                          // option('Vacation',4),
+                          // option('Entertainment',5),
+                          // option('',6),
+                          // option('Food',7),
+                        ],
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      child: Icon(Icons.cancel,
+                      ),
+                      onTap: (){
+                        setState(() {
+                           clearAll();
+                          selectedIndex=null;
+                        });
+                       
+                      },
+                    )
+                  ],
+                ),
                 TextField(
                   decoration:  InputDecoration(fillColor: Colors.white24,
                   filled: true),
@@ -131,6 +168,7 @@ class _AddState extends State<Add> {
                     labels: ['Take', 'Give'],
                     activeBgColors: [Colors.green, Color(0xfff96060)],
                     onToggle: (index) {
+                      print(toggleValue);
                       if(index == 0){
                         toggleValue = true;
                       }else{
@@ -152,35 +190,46 @@ class _AddState extends State<Add> {
                 Center(
                   child: InkWell(
                     onTap: () async {
-                      int i =
-                      await DatabaseHelper.instance.insert({
-                        DatabaseHelper.columnName:
-                        _controller1.text,
-                        DatabaseHelper.columnAmount:
-                        _controller2,
-                        DatabaseHelper.columnPhone:
-                        _controller3.text,
-                        DatabaseHelper.columnCondition:
-                        (toggleValue == false)
-                            ? 'Give'
-                            : 'Take',
-                        DatabaseHelper.columnDescription: _controller4.text
-                      });
-                      List<Map<String, dynamic>> query =
-                      await DatabaseHelper.instance
-                          .queryAll();
-                      Take = await DatabaseHelper.instance.TotalToTake();
-                      Give = await DatabaseHelper.instance.TotalToGive();
-                      widget.Take = Take;
-                      widget.Give = Give;
-                      closePopup();
-                      setState(() {
-                        _controller1.text = '';
-                        _controller3.text = '';
-                        _controller2 = 0;
-                        widget.query = query;
-                        toggleValue = false;
-                      });
+                      if(_controller1.text=='')
+                      {
+                          Fluttertoast.showToast(msg: 'Please enter name');
+                      }
+                      else if(_controller2==null)
+                      {
+                          Fluttertoast.showToast(msg: 'Please enter amount');
+                      }
+                      else{
+                        int i =
+                        await DatabaseHelper.instance.insert({
+                          DatabaseHelper.columnName:
+                          _controller1.text,
+                          DatabaseHelper.columnAmount:
+                          _controller2,
+                          DatabaseHelper.columnPhone:
+                          _controller3.text,
+                          DatabaseHelper.columnCondition:
+                          (toggleValue == false)
+                              ? 'Give'
+                              : 'Take',
+                          DatabaseHelper.columnDescription: _controller4.text,
+                          DatabaseHelper.columnIcon: selectedIndex
+                        });
+                        List<Map<String, dynamic>> query =
+                        await DatabaseHelper.instance
+                            .queryAll();
+                        Take = await DatabaseHelper.instance.TotalToTake();
+                        Give = await DatabaseHelper.instance.TotalToGive();
+                        widget.Take = Take;
+                        widget.Give = Give;
+                        closePopup();
+                        setState(() {
+                          _controller1.text = '';
+                          _controller3.text = '';
+                          _controller2 = 0;
+                          widget.query = query;
+                          toggleValue = false;
+                        });
+                      }
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
@@ -221,6 +270,35 @@ class _AddState extends State<Add> {
         )
     );
   }
+
+  Padding option(String label,int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ChoiceChip(
+                        label: Text(
+                          label,
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        selectedColor: Colors.grey,
+                        selected: selected[index],
+                        onSelected:(value){
+                          setState(() {
+                            clearAll();
+                            selected[index]=!selected[index];
+                            selectedIndex=index;
+                          });
+                        },
+                      ),
+    );
+  }
+  
+
+  void clearAll(){
+    
+      selected=[false,false,false,false];
+
+  }
+  
   closePopup() async{
     List<Map<String, dynamic>> query =
         await DatabaseHelper.instance.queryAll();
@@ -229,3 +307,5 @@ class _AddState extends State<Add> {
     Navigator.push(context, MaterialPageRoute(builder: (context)=> Home(query,Give1,Take1)));
   }
 }
+
+

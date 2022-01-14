@@ -42,7 +42,7 @@ class _ProfileState extends State<Profile> {
           children: [
             CircleAvatar(
               child: Text(
-                'AC', style: TextStyle(color: Colors.white, fontSize: 25),),
+                widget.email[0].toUpperCase(), style: TextStyle(color: Colors.white, fontSize: 30,fontWeight: FontWeight.bold),),
               backgroundColor: Color(0xfff96060),
               radius: 50,
             ),

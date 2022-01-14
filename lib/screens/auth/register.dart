@@ -153,11 +153,13 @@ class _RegisterState extends State<Register> {
     var res = await http.post(url, body: data);
 
       if (jsonDecode(res.body) == "Account already exists") {
+        print('Account already exists, Please login');
         Fluttertoast.showToast(
             msg: 'Account already exists, Please login',
             toastLength: Toast.LENGTH_LONG);
       } else {
         if (jsonDecode(res.body) == "true") {
+          print('Account Created');
           Fluttertoast.showToast(
               msg: "Account Created", toastLength: Toast.LENGTH_SHORT);
           List<Map<String, dynamic>> query =
@@ -181,7 +183,9 @@ class _RegisterState extends State<Register> {
 
   Widget _RoundContinueButton(isLoading) {
     return RawMaterialButton(
-      onPressed: () => (namectrl.text == '' || emailctrl.text == '' || passctrl.text == '') ? Fluttertoast.showToast(msg: 'Please Enter Name, Email And password',toastLength:  Toast.LENGTH_LONG) : registerUser(),
+      onPressed: () {
+        (namectrl.text == '' || emailctrl.text == '' || passctrl.text == '') ? print('not done') : registerUser();
+      },
       elevation: 0.0,
       fillColor: Palette.darkBlue,
       splashColor: Palette.darkOrange,
